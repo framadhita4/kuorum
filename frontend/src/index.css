@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import './variable.css';
+
+:root {
+  --font-sans:
+    'TWK Lausanne', 'Inter', -apple-system, BlinkMacSystemFont,
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display:
+    'Ghost', 'TWK Lausanne', 'Inter', -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, monospace;
+
+  /* Legacy dark compatibility variables for /explore */
+  --bg-primary: #121212;
+  --bg-secondary: #181818;
+  --bg-surface: #1e1e1e;
+  --bg-elevated: #242424;
+  --border-subtle: #262626;
+  --border-medium: #333333;
+  --text-main: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #6e6e73;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-ink-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.btn-dark {
+  background-color: var(--color-ink-primary);
+  color: var(--color-ink-inverse);
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.btn-dark:hover {
+  background-color: var(--color-brand-coral);
+  color: var(--color-ink-primary);
+}
+
+.btn-border {
+  background-color: transparent;
+  color: var(--color-ink-primary);
+  border: 1px solid var(--color-ink-primary);
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.btn-border:hover {
+  background-color: var(--color-brand-coral);
+  border-color: var(--color-brand-coral);
+  color: var(--color-ink-primary);
+}
+
+.btn-purple {
+  background-color: var(--color-accent-purple);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.btn-purple:hover {
+  background-color: var(--color-accent-purple-dark);
+  color: #ffffff;
+}
+
+.tab_button {
+  background-color: var(--color-bg-neutral);
+  color: var(--color-ink-secondary);
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+
+.tab_button:hover {
+  background-color: #eaeaea;
+  color: var(--color-ink-primary);
+}
+
+.tab_button.active {
+  background-color: var(--color-accent-midnight);
+  color: #ffffff;
+}
+
+.tab_button.active-purple {
+  background-color: var(--color-accent-purple);
+  color: #ffffff;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

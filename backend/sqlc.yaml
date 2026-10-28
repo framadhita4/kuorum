@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    schema: "internal/infrastructure/persistence/sql/schema.sql"
+    queries: "internal/infrastructure/persistence/sql/queries/"
+    gen:
+      go:
+        package: "db"
+        out: "internal/infrastructure/persistence/db"
+        sql_package: "database/sql"
+        emit_json_tags: true
+        emit_empty_slices: true

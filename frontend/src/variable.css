@@ -1,0 +1,111 @@
+/**
+ * Research Helper Design System Variables
+ *
+ * NOTE: The single source of truth for all design system tokens is:
+ * src/-components/ui/theme.ts (powered by @emotion/react).
+ *
+ * Any changes made in theme.ts automatically propagate through ThemeProvider
+ * and the injected :root CSS variables.
+ */
+
+:root {
+  /* Surface & Canvas */
+  --color-bg-primary: #ffffff;
+  --color-bg-subtle: #f6f8f9;
+  --color-bg-neutral: #f3f3f3;
+  --color-bg-charcoal: #222b37;
+  --color-bg-dark: #151b26;
+  --color-bg-footer: #0d1b2f;
+
+  /* Ink / Text */
+  --color-ink-primary: #0d0e10;
+  --color-ink-secondary: #4a5464;
+  --color-ink-muted: #646f79;
+  --color-ink-subtle: #6e6e6e;
+  --color-ink-inverse: #ffffff;
+
+  /* Brand & Accents */
+  --color-brand-coral: #f06a6a;
+  --color-brand-vibrant: #ff584a;
+  --color-brand-claret: #690031;
+  --color-accent-purple: #796eff;
+  --color-accent-purple-dark: #635ac7;
+  --color-accent-lilac: #ffc9ff;
+  --color-accent-blue: #00b2ff;
+  --color-accent-midnight: #222875;
+  --color-accent-gold: #fcbd01;
+  --color-danger: #cd4848;
+
+  /* Gradients */
+  --gradient-surface-fade: linear-gradient(180deg, #ffffff 0%, #f6f8f9 100%);
+  --gradient-ai-purple: linear-gradient(
+    90deg,
+    #796eff 0%,
+    #d472c5 45%,
+    #df70b8 65%,
+    #ff6d92 100%
+  );
+  --gradient-dark-scrim: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
+
+  /* Typography */
+  --font-sans: 'TWK Lausanne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: 'Ghost', 'TWK Lausanne', sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, monospace;
+
+  /* Type Scale (Desktop) */
+  --text-display: 6.375rem; /* 102px */
+  --text-h1: 3.375rem; /* 54px */
+  --text-h2: 2.25rem; /* 36px */
+  --text-h3: 1.875rem; /* 30px */
+  --text-h4: 1.5rem; /* 24px */
+  --text-body-lg: 1.25rem; /* 20px */
+  --text-body: 1rem; /* 16px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-xs: 0.75rem; /* 12px */
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-30: 120px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-button: 8px;
+  --radius-card: 16px;
+  --radius-hero: 24px;
+  --radius-pill: 9999px;
+
+  /* Borders */
+  --border-subtle-color: #e2e6e9;
+  --border-subtle: 1px solid rgba(100, 111, 121, 0.2);
+
+  /* Elevation & Motion */
+  --shadow-sm: 0 2px 6px rgba(13, 14, 16, 0.04);
+  --shadow-md: 0 8px 24px rgba(13, 14, 16, 0.08);
+  --shadow-lg: 0 16px 40px rgba(13, 14, 16, 0.12);
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 350ms;
+
+  /* Dark mode compatibility */
+  --bg-primary: #121212;
+  --bg-secondary: #181818;
+  --bg-surface: #1e1e1e;
+  --bg-elevated: #242424;
+  --border-subtle: #262626;
+  --border-medium: #333333;
+  --text-main: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #6e6e73;
+}

@@ -1,0 +1,1045 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Research Helper API",
+    "version": "1.0.0",
+    "description": "Enterprise Academic Literature Research Engine featuring multi-provider federated paper retrieval (OpenAlex, Semantic Scholar, arXiv, Crossref), cognitive concept decomposition, and citation graph traversal."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Default Local / Host Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Papers",
+      "description": "Academic literature search, provider aggregation, metadata resolution, and citation graphs."
+    },
+    {
+      "name": "Exploration",
+      "description": "Cognitive concept decomposition, facet exploration, and query reformulation."
+    },
+    {
+      "name": "Health",
+      "description": "Service availability and health check."
+    }
+  ],
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "description": "Returns operational status and timestamp of the API server.",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "ok",
+                  "service": "kuorum-api",
+                  "timestamp": "2026-10-26T11:00:00Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/search": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Search papers across academic providers",
+        "description": "Concurrently searches OpenAlex, Semantic Scholar, arXiv, and Crossref with automated deduplication and consolidation.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Search query or concept keywords",
+            "schema": {
+              "type": "string",
+              "example": "attention mechanism transformers"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of consolidated papers to return",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "example": 5
+            }
+          },
+          {
+            "name": "providers",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated provider names (openalex, semanticscholar, arxiv, crossref)",
+            "schema": {
+              "type": "string",
+              "example": "openalex,arxiv,crossref"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Papers retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPapersEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Papers"],
+        "summary": "Search papers (JSON payload)",
+        "description": "Allows sending search queries with explicit array filters for providers.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchPapersRequest"
+              },
+              "example": {
+                "query": "quantum error correction surface codes",
+                "limit": 5,
+                "providers": ["openalex", "arxiv"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Papers retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPapersEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/providers": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "List active academic providers",
+        "description": "Returns the registered provider backends currently active in the federated aggregator.",
+        "responses": {
+          "200": {
+            "description": "Providers list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/details": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Get paper details by ID / DOI (query param)",
+        "description": "Resolves complete metadata for a paper by DOI, OpenAlex ID, or arXiv ID via query string `?id=`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Paper ID, DOI (e.g. 10.1038/s41586-020-2649-2), or URL",
+            "schema": {
+              "type": "string",
+              "example": "https://openalex.org/W2741809807"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paper metadata found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperDetailsEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing ID or paper not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/{id}": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Get paper details by ID (path param)",
+        "description": "Resolves complete metadata for standard paper IDs (e.g. OpenAlex W-identifiers, arXiv IDs).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Paper ID",
+            "schema": {
+              "type": "string",
+              "example": "W2741809807"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paper metadata found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperDetailsEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Paper not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/references": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Get paper foundational references",
+        "description": "Retrieves backwards citation links (references cited by the specified paper).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Paper ID or DOI",
+            "schema": {
+              "type": "string",
+              "example": "https://openalex.org/W2741809807"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "References list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferencesEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/citations": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Get forward citations",
+        "description": "Retrieves papers that cite the specified paper ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Paper ID or DOI",
+            "schema": {
+              "type": "string",
+              "example": "https://openalex.org/W2741809807"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Citations list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CitationsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/upload-pdf": {
+      "post": {
+        "tags": ["Papers"],
+        "summary": "Upload and parse academic PDF",
+        "description": "Uploads an academic PDF, removes headers/footers, fixes two-column hyphenation, segments into canonical sections (Abstract, Introduction, Methodology, Results, References), and extracts citations.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF document to upload (max 50MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PDF parsed successfully into sections and references",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestPdfEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file, empty, or encrypted PDF",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/{id}/sections": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Get paper sections with intent filtering",
+        "description": "Returns structured sections for an ingested paper. Supports intelligent intent routing (e.g. intent=results returns Abstract + Results + Discussion; intent=definitions returns Abstract + Methodology).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Paper ID",
+            "schema": {
+              "type": "string",
+              "example": "attention-is-all-you-need"
+            }
+          },
+          {
+            "name": "intent",
+            "in": "query",
+            "required": false,
+            "description": "Research intent to filter sections: results, definitions, mechanisms, prior_work",
+            "schema": {
+              "type": "string",
+              "enum": ["results", "definitions", "mechanisms", "prior_work"],
+              "example": "results"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sections retrieved with global anchor and target sections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdfSectionsEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing paper ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Paper not found or not yet parsed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/{id}/pdf": {
+      "get": {
+        "tags": ["Papers"],
+        "summary": "Stream raw PDF file",
+        "description": "Serves raw PDF binary stream for inline browser rendering in the frontend reader (pdfjs-dist).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Paper ID",
+            "schema": {
+              "type": "string",
+              "example": "attention-is-all-you-need"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF binary stream",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PDF file not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "tags": ["Exploration"],
+        "summary": "List available LLM models and providers",
+        "description": "Returns registered LLM providers, model specifications, context limits, and reasoning capabilities.",
+        "responses": {
+          "200": {
+            "description": "Available models retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetModelsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exploration/models": {
+      "get": {
+        "tags": ["Exploration"],
+        "summary": "List available exploration models",
+        "description": "Alias to /api/v1/models returning the registered LLM catalog.",
+        "responses": {
+          "200": {
+            "description": "Available models retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetModelsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exploration/decompose": {
+      "post": {
+        "tags": ["Exploration"],
+        "summary": "Decompose concept into research angles",
+        "description": "Synthesizes multi-angle facets and optimized academic queries for literature search.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecomposeConceptRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Decomposition successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecomposeEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input prompt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exploration/stream": {
+      "post": {
+        "tags": ["Exploration"],
+        "summary": "Stream concept decomposition via Server-Sent Events (SSE)",
+        "description": "Decomposes a research concept in real-time, streaming status progression events and finalized structured JSON.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecomposeConceptRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events text stream",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "example": "event: status\ndata: {\"status\":\"initiating_concept_decomposition\"}\n\nevent: done\ndata: {...}\n\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exploration/reformulate": {
+      "post": {
+        "tags": ["Exploration"],
+        "summary": "Reformulate query for academic search",
+        "description": "Translates high-level research questions into targeted Boolean and keyword queries.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "example": "how to reduce hallucinations in large language models"
+                  },
+                  "angle": {
+                    "type": "string",
+                    "example": "Retrieval Augmented Generation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query reformulated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReformulateEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exploration/angles": {
+      "get": {
+        "tags": ["Exploration"],
+        "summary": "Get exploration angles",
+        "description": "Fetches predefined or cached exploration angles for a given concept.",
+        "parameters": [
+          {
+            "name": "concept",
+            "in": "query",
+            "required": false,
+            "description": "Concept name",
+            "schema": {
+              "type": "string",
+              "example": "Diffusion Models"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exploration angles retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnglesEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Author": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "https://openalex.org/A5023880059" },
+          "name": { "type": "string", "example": "Ashish Vaswani" }
+        }
+      },
+      "PaperMetadata": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "https://openalex.org/W2741809807" },
+          "title": { "type": "string", "example": "Attention Is All You Need" },
+          "abstract": { "type": "string", "example": "The dominant sequence transduction models are based on complex recurrent neural networks..." },
+          "authors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Author" }
+          },
+          "year": { "type": "integer", "example": 2017 },
+          "citationCount": { "type": "integer", "example": 125000 },
+          "influentialCitationCount": { "type": "integer", "example": 15000 },
+          "tldr": { "type": "string", "example": "We propose a new simple network architecture, the Transformer..." },
+          "fieldsOfStudy": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Computer Science", "Artificial Intelligence"]
+          },
+          "openAccessPdfUrl": { "type": "string", "example": "https://arxiv.org/pdf/1706.03762" },
+          "doi": { "type": "string", "example": "10.48550/arXiv.1706.03762" },
+          "venue": { "type": "string", "example": "NeurIPS" },
+          "fetchedAt": { "type": "string", "format": "date-time", "example": "2026-10-26T11:00:00Z" },
+          "sources": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["openalex", "arxiv", "semanticscholar"]
+          }
+        }
+      },
+      "SearchPapersRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "example": "quantum error correction" },
+          "limit": { "type": "integer", "default": 10, "example": 5 },
+          "providers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["openalex", "arxiv"]
+          }
+        }
+      },
+      "SearchPapersResult": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "example": "quantum error correction" },
+          "total": { "type": "integer", "example": 5 },
+          "providers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["openalex", "arxiv"]
+          },
+          "papers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PaperMetadata" }
+          }
+        }
+      },
+      "SearchPapersEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Papers retrieved successfully" },
+          "data": { "$ref": "#/components/schemas/SearchPapersResult" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "PaperDetailsEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Paper details retrieved successfully" },
+          "data": { "$ref": "#/components/schemas/PaperMetadata" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "ReferencesEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Paper references retrieved successfully" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "paperId": { "type": "string", "example": "https://openalex.org/W2741809807" },
+              "total": { "type": "integer", "example": 35 },
+              "references": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PaperMetadata" }
+              }
+            }
+          },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "CitationsEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Paper citations retrieved successfully" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "paperId": { "type": "string", "example": "https://openalex.org/W2741809807" },
+              "total": { "type": "integer", "example": 50 },
+              "citations": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PaperMetadata" }
+              }
+            }
+          },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "ProvidersEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Available providers retrieved successfully" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "providers": {
+                "type": "array",
+                "items": { "type": "string" },
+                "example": ["openalex", "semanticscholar", "arxiv", "crossref"]
+              }
+            }
+          },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "DecomposeConceptRequest": {
+        "type": "object",
+        "required": ["prompt"],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "example": "Reinforcement Learning from Human Feedback"
+          },
+          "model": {
+            "type": "string",
+            "example": "gemini-2.0-flash",
+            "description": "Optional model ID override (e.g. gemini-2.0-flash, claude-3-7-sonnet-20250219, gpt-4o, deepseek-chat)"
+          }
+        }
+      },
+      "ModelDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "gemini-2.0-flash" },
+          "displayName": { "type": "string", "example": "Gemini 2.0 Flash" },
+          "provider": { "type": "string", "example": "gemini" },
+          "providerDisplayName": { "type": "string", "example": "Google Gemini" },
+          "description": { "type": "string", "example": "Ultra-fast multimodal model with 1M token context" },
+          "contextWindow": { "type": "integer", "example": 1048576 },
+          "maxOutputTokens": { "type": "integer", "example": 8192 },
+          "thinkingCapability": { "type": "string", "enum": ["not_supported", "optional", "required"], "example": "not_supported" },
+          "supportedEfforts": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["low", "medium", "high"]
+          },
+          "allowsTemperature": { "type": "boolean", "example": true },
+          "isDefault": { "type": "boolean", "example": true }
+        }
+      },
+      "ProviderDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "gemini" },
+          "displayName": { "type": "string", "example": "Google Gemini" },
+          "description": { "type": "string", "example": "Google Gemini official OpenAI-compatible endpoint" },
+          "defaultModel": { "type": "string", "example": "gemini-2.0-flash" },
+          "modelIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["gemini-2.0-flash", "gemini-2.0-pro-exp-02-05"]
+          }
+        }
+      },
+      "GetModelsResult": {
+        "type": "object",
+        "properties": {
+          "defaultModelId": { "type": "string", "example": "gpt-4o-mini" },
+          "models": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ModelDTO" }
+          },
+          "providers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProviderDTO" }
+          }
+        }
+      },
+      "GetModelsEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Available models retrieved successfully" },
+          "data": { "$ref": "#/components/schemas/GetModelsResult" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "ExplorationAngleDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "angle-theor-1" },
+          "title": { "type": "string", "example": "Theoretical Foundations & Mathematical Formulation" },
+          "description": { "type": "string", "example": "Underlying mathematical models, core theorems, and foundational principles." },
+          "suggestedQueries": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["RLHF foundational principles", "mathematical formulation baseline"]
+          }
+        }
+      },
+      "DecomposeResult": {
+        "type": "object",
+        "properties": {
+          "concept": { "type": "string", "example": "Reinforcement Learning from Human Feedback" },
+          "normalizedTerm": { "type": "string", "example": "Reinforcement Learning From Human Feedback" },
+          "angles": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExplorationAngleDTO" }
+          }
+        }
+      },
+      "DecomposeEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Concept decomposed successfully" },
+          "data": { "$ref": "#/components/schemas/DecomposeResult" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "ReformulateEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Query reformulated successfully" },
+          "data": { "type": "object" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "AnglesEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Exploration angles retrieved successfully" },
+          "data": { "type": "object" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Request failed" },
+          "data": { "nullable": true, "example": null },
+          "error": { "type": "string", "example": "search query cannot be empty" }
+        }
+      },
+      "ParsedSection": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "sec-1" },
+          "type": {
+            "type": "string",
+            "enum": ["ABSTRACT", "INTRODUCTION", "RELATED_WORK", "METHODOLOGY", "RESULTS", "DISCUSSION", "CONCLUSION", "REFERENCES", "APPENDIX", "OTHER"],
+            "example": "METHODOLOGY"
+          },
+          "title": { "type": "string", "example": "3. Model Architecture" },
+          "content": { "type": "string", "example": "The Transformer follows this overall architecture using stacked self-attention..." },
+          "paragraphs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "startPage": { "type": "integer", "example": 3 },
+          "endPage": { "type": "integer", "example": 5 },
+          "orderIndex": { "type": "integer", "example": 3 },
+          "wordCount": { "type": "integer", "example": 850 }
+        }
+      },
+      "ExtractedReference": {
+        "type": "object",
+        "properties": {
+          "index": { "type": "integer", "example": 1 },
+          "rawText": { "type": "string", "example": "[1] Ashish Vaswani et al. Attention is all you need. In NeurIPS, 2017." },
+          "authors": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Ashish Vaswani", "Noam Shazeer"]
+          },
+          "title": { "type": "string", "example": "Attention is all you need" },
+          "year": { "type": "integer", "example": 2017 },
+          "venue": { "type": "string", "example": "NeurIPS" },
+          "doi": { "type": "string", "example": "10.1145/3065386" },
+          "arxivId": { "type": "string", "example": "1706.03762" }
+        }
+      },
+      "PdfDocument": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "attention-is-all-you-need" },
+          "fileName": { "type": "string", "example": "1706.03762.pdf" },
+          "title": { "type": "string", "example": "Attention Is All You Need" },
+          "authors": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Ashish Vaswani", "Noam Shazeer"]
+          },
+          "abstract": { "type": "string", "example": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks..." },
+          "totalPages": { "type": "integer", "example": 11 },
+          "sections": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ParsedSection" }
+          },
+          "references": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExtractedReference" }
+          },
+          "rawTextLength": { "type": "integer", "example": 38450 },
+          "parsedAt": { "type": "string", "format": "date-time", "example": "2026-10-26T12:00:00Z" }
+        }
+      },
+      "IngestPdfResult": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Successfully parsed 11 pages into 8 sections" },
+          "paperId": { "type": "string", "example": "attention-is-all-you-need" },
+          "document": { "$ref": "#/components/schemas/PdfDocument" },
+          "savedPath": { "type": "string", "example": "data/papers/attention-is-all-you-need.pdf" },
+          "totalPages": { "type": "integer", "example": 11 },
+          "sectionCount": { "type": "integer", "example": 8 },
+          "refCount": { "type": "integer", "example": 32 }
+        }
+      },
+      "IngestPdfEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "PDF uploaded and parsed successfully" },
+          "data": { "$ref": "#/components/schemas/IngestPdfResult" },
+          "error": { "nullable": true, "example": null }
+        }
+      },
+      "GetPdfSectionsResult": {
+        "type": "object",
+        "properties": {
+          "paperId": { "type": "string", "example": "attention-is-all-you-need" },
+          "intent": { "type": "string", "example": "results" },
+          "anchorSection": { "$ref": "#/components/schemas/ParsedSection" },
+          "targetSections": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ParsedSection" }
+          },
+          "allSections": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ParsedSection" }
+          },
+          "totalSections": { "type": "integer", "example": 8 }
+        }
+      },
+      "PdfSectionsEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Paper sections retrieved successfully" },
+          "data": { "$ref": "#/components/schemas/GetPdfSectionsResult" },
+          "error": { "nullable": true, "example": null }
+        }
+      }
+    }
+  }
+}
+
